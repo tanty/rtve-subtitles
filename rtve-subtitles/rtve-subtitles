@@ -1,0 +1,114 @@
+#!/usr/bin/env python3
+
+# Importing the function argv from the sys module
+from sys import argv
+
+from html.parser import HTMLParser
+from html.entities import name2codepoint
+
+class MyHTMLParser(HTMLParser):
+
+    def __init__(self):
+        HTMLParser.__init__(self)
+        self.sub_counter = 0
+        self.sec_start = 0
+        self.sec_end = 0
+        self.div_counter = 0
+        self.span_counter = 0
+        self.a_counter = 0
+        self.c_counter = 0
+        self.in_c = False
+        self.subtitle_text = ''
+        self.subtitle_length = 3
+
+    def print_timing(self):
+        sm, ss = divmod(self.sec_start, 60)
+        sh, sm = divmod(sm, 60)
+        em, es = divmod(self.sec_end, 60)
+        eh, em = divmod(em, 60)
+        time = "%d:%02d:%02d,000 --> %d:%02d:%02d,000" % (sh, sm, ss, eh, em, es)
+        return time
+
+    def output_next_sub(self):
+        print("%d" % (self.sub_counter))
+        print(self.print_timing())
+        print(self.subtitle_text)
+        print('')
+
+    def handle_starttag(self, tag, attrs):
+        self.in_c = False
+        if tag == 'div':
+            if ('id', 'transcripcion') in attrs:
+                self.div_counter = 1
+                self.span_counter = 0
+                self.a_counter = 0
+                self.c_counter = 0
+        if self.div_counter > 0:
+            if tag == 'span':
+                self.span_counter += 1
+                for attr in attrs:
+                    if attr[0] == 'id' and attr[1].startswith('seg_'):
+                        seconds = int(attr[1].replace('seg_', ''))
+                        if seconds < self.sec_end:
+                            self.sec_end = seconds
+                        if self.sub_counter > 0:
+                            self.output_next_sub()
+                        self.sub_counter += 1
+                        self.sec_start = seconds
+                        self.sec_end = seconds + self.subtitle_length
+            elif tag == 'a':
+                self.a_counter += 1
+                self.color = 'none'
+            elif tag == 'c' or tag.startswith('c.'):
+                self.in_c = True
+                self.c_counter += 1
+                if tag.startswith('c.vtt_'):
+                    self.color = tag.replace('c.vtt_', '')
+                else:
+                    self.color = 'none'
+        # print("Start tag:", tag)
+    def handle_endtag(self, tag):
+        if self.div_counter > 0:
+            if tag == 'div':
+                self.div_counter -= 1
+                if self.div_counter == 0:
+                    self.output_next_sub()
+                    self.span_counter = 0
+                    self.a_counter = 0
+                    self.c_counter = 0
+            elif tag == 'span':
+                self.span_counter -= 1
+            elif tag == 'a':
+                self.a_counter -= 1
+            elif tag == 'c':
+                self.c_counter -= 1
+        # print("  End tag:", tag)
+    def handle_data(self, data):
+        if self.a_counter > 0:
+            clean_data = data.strip()
+            if clean_data != '':
+                self.subtitle_text = data.strip()
+                if self.color != 'none':
+                    self.subtitle_text = '<font color="' + self.color + '">' + self.subtitle_text + '</font>'
+    # def handle_comment(self, data):
+    #     print("Comment  :", data)
+    # def handle_entityref(self, name):
+    #     c = chr(name2codepoint[name])
+    #     print("Named ent:", c)
+    # def handle_charref(self, name):
+    #     if name.startswith('x'):
+    #         c = chr(int(name[1:], 16))
+    #     else:
+    #         c = chr(int(name))
+    #     print("Num ent  :", c)
+    # def handle_decl(self, data):
+    #     print("Decl     :", data)
+
+# Unpacking argv into 2 parameters
+script, filename = argv
+
+# Opening the filename in the first parameter
+html_file = open(filename)
+
+parser = MyHTMLParser()
+parser.feed(html_file.read())
