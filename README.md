@@ -8,12 +8,14 @@ page into the SubRip format
 
 # DESCRIPTION
 **rtve-subtitles** is a small command-line program to convert the
-embedded subtitles from a downloaded HTML page from the [A la
+embedded subtitles from an URL or downloaded HTML page from the [A la
 carta](http://www.rtve.es/alacarta/) service of the
 [RTVE](http://www.rtve.es) Spain's national television page into
 SubRip format subtitles.
 
     rtve-subtitles file.html
+
+    rtve-subtitles http://www.rtve.es/alacarta/videos/el-ministerio-del-tiempo/ministerio-del-tiempo-capitulo-1/3013194/
 
 # BUGS
 

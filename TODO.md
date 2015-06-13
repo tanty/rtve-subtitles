@@ -1,4 +1,3 @@
 - Clean the script
 - Provide logging
 - Make it resistant to errors
-- Allow direct URL download

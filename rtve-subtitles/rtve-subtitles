@@ -3,8 +3,13 @@
 # Importing the function argv from the sys module
 from sys import argv
 
+from os import path
+
 from html.parser import HTMLParser
 from html.entities import name2codepoint
+
+from urllib.parse import urlparse
+from urllib.request import urlopen
 
 class MyHTMLParser(HTMLParser):
 
@@ -105,10 +110,14 @@ class MyHTMLParser(HTMLParser):
     #     print("Decl     :", data)
 
 # Unpacking argv into 2 parameters
-script, filename = argv
+script, url = argv
 
-# Opening the filename in the first parameter
-html_file = open(filename)
+# Checking the URL
+html_url = urlparse(url)
+if not html_url.scheme:
+    html_url = urlparse(path.abspath(url), 'file://')
 
+# Parse the file at the URL
 parser = MyHTMLParser()
-parser.feed(html_file.read())
+with urlopen(html_url.geturl()) as f:
+    parser.feed(f.read().decode('utf-8'))
